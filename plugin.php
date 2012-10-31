@@ -70,13 +70,30 @@ function dropbox_save_files($item, $post)
     if ($fileNames) {
         $filePaths = array();
         foreach($fileNames as $fileName) {
+            // We need to test if fileName is a file or if fileName is a dir. If it is a dir we
+            // need to go through it.
             $filePath = PLUGIN_DIR.DIRECTORY_SEPARATOR.'Dropbox'.DIRECTORY_SEPARATOR.'files'.DIRECTORY_SEPARATOR.$fileName;
-            if (!dropbox_can_access_file($filePath)) {
-                throw new Dropbox_Exception('Please make the following dropbox file readable and writable: ' . $filePath);
-            }
-            $filePaths[] = $filePath;
-        }
+            
+            if (is_dir($filePath))
+            {
+                $iter = new DirectoryIterator($filePath);
 
+                foreach ($iter as $fileEntry) {
+                    if ($fileEntry->isFile()) {
+                        $filePaths[] = $filePath."/".$fileEntry->getFilename();
+                    }
+                }
+                
+            }
+            else
+            {
+                if (!dropbox_can_access_file($filePath)) {
+                    throw new Dropbox_Exception('Please make the following dropbox file readable and writable: ' . $filePath);
+                }
+                $filePaths[] = $filePath;
+            }
+        }
+        natcasesort($filePaths);
         $files = array();
         try {
             $files = insert_files_for_item($item, 'Filesystem', $filePaths);
@@ -92,6 +109,7 @@ function dropbox_save_files($item, $post)
 
         // delete the files
         foreach($filePaths as $filePath) {
+            print "<h1>$filePath</h1>";
             try {
                 unlink($filePath);
             } catch (Exception $e) {
@@ -149,16 +167,20 @@ function dropbox_dir_list($directory)
 {
     // create an array to hold directory list
     $filenames = array();
-
+    $filenames['_DIR'] = array();
+    
     $iter = new DirectoryIterator($directory);
 
     foreach ($iter as $fileEntry) {
         if ($fileEntry->isFile()) {
             $filenames[] = $fileEntry->getFilename();
         }
+        elseif ( ($fileEntry->isDir()) and ($fileEntry->getFilename() != '.') and ($fileEntry->getFilename() != '..') ){
+            
+            $filenames['_DIR'][] = Array('name' => $fileEntry->getFilename(), 'size' => iterator_count(new DirectoryIterator($fileEntry->getPathname())) - 2);
+        }
     }
 
     natcasesort($filenames);
-
     return $filenames;
 }

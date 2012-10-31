@@ -76,6 +76,16 @@
             </tr>
         </thead>
         <tbody id="dropbox-file-checkboxes">
+        <?php
+            // We start by seeing if there are some subdirectories
+            $dirNames = $fileNames['_DIR'];
+            unset($fileNames['_DIR']);
+            foreach ($dirNames as $oneDir):
+        ?>
+        <tr><td><input type="checkbox" name="dropbox-files[]" value="<?php echo html_escape($oneDir["name"]); ?>"/></td><td><span style='background-position:0px; padding-left:20px' class='browse-collections'><?php echo html_escape($oneDir['name']). " (".$oneDir['size'].")"; ?></span></td></tr>
+        
+        <?php endforeach; ?>
+            
         <?php foreach ($fileNames as $fileName): ?>
             <tr><td><input type="checkbox" name="dropbox-files[]" value="<?php echo html_escape($fileName); ?>"/></td><td><?php echo html_escape($fileName); ?></td></tr>
         <?php endforeach; ?>
