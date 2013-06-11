@@ -59,6 +59,7 @@ function dropbox_dir_list($directory)
     
     // create an array to hold directory list
     $filenames = array();
+    $filenames["_DIR"] = array();
 
     $iter = new DirectoryIterator($directory);
 
@@ -66,10 +67,15 @@ function dropbox_dir_list($directory)
         if ($fileEntry->isFile()) {
             $filenames[] = $fileEntry->getFilename();
         }
+        elseif ( ($fileEntry->isDir()) and ($fileEntry->getFilename() != '.') and ($fileEntry->getFilename() != '..') )
+        {
+            $filenames['_DIR'][] = Array('name' => $fileEntry->getFilename(), 'size' => iterator_count(new DirectoryIterator($fileEntry->getPathname())) - 2);
+        }
     }
-
-    natcasesort($filenames);
-
+    
+    // TODO : Vérifier que c'est bien utile (ça génère des warnings)
+    natcasesort($filenames);        
+    
     return $filenames;
 }
 

@@ -24,6 +24,7 @@ class DropboxPlugin extends Omeka_Plugin_AbstractPlugin
         'after_save_item',
         'admin_items_form_files',
         'define_acl',
+        'admin_head',
     );
     
     //Define Filters
@@ -61,6 +62,24 @@ class DropboxPlugin extends Omeka_Plugin_AbstractPlugin
         $acl->addResource('Dropbox_index');
     }
     
+    public function hookAdminHead($args)
+    {
+        $request = Zend_Controller_Front::getInstance()->getRequest();
+        if
+        (
+            ($request->getControllerName() == "items")
+            and
+            (
+                ($request->getActionName() == "edit")
+                or
+                ($request->getActionName() == "add")
+            )
+        )
+        {
+            queue_css_file('dropbox-main');   
+        }
+    }
+    
     /*
      *  Display the list of files
      */
@@ -85,8 +104,11 @@ class DropboxPlugin extends Omeka_Plugin_AbstractPlugin
         if (!dropbox_can_access_files_dir()) {
             Zend_Controller_Action_HelperBroker::getStaticHelper('FlashMessenger')->addMessage(__('Please make the following dropbox directory writable: ' . dropbox_get_files_dir_path()), 'warning');
         }
-    
-        $fileNames = $post['dropbox-files'];
+        $fileNames = "";
+        if (isset($post['dropbox-files']))
+        {
+            $fileNames = $post['dropbox-files'];            
+        }
         if ($fileNames) {
             $filePaths = array();
             foreach($fileNames as $fileName) {
@@ -94,8 +116,27 @@ class DropboxPlugin extends Omeka_Plugin_AbstractPlugin
                 if (!dropbox_can_access_file($filePath)) {
                     throw new Dropbox_Exception('Please make the following dropbox file readable and writable: ' . $filePath);
                 }
-                $filePaths[] = $filePath;
+                if (is_dir($filePath))
+                {
+                    // User wants to add a whole directory, we need to go through the directory
+                    $iter = new DirectoryIterator($filePath);
+                    foreach ($iter as $fileEntry) {
+                        if ($fileEntry->isFile()) {
+                            $fullFilePath = $filePath."/".$fileEntry->getFilename();
+                            if (!dropbox_can_access_file($filePath)) {
+                                throw new Dropbox_Exception('Please make the following dropbox file readable and writable: ' . $fullFilePath);
+                            }
+                            $filePaths[] = $fullFilePath;
+                        }
+                    }
+                }
+                else
+                {
+                    $filePaths[] = $filePath;                    
+                }
             }
+            
+            natcasesort($filePaths);
     
             $files = array();
             try {
