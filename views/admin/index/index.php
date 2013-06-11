@@ -1,12 +1,15 @@
-<?php queue_js('items'); ?>
-<?php head(array('title' => 'Dropbox', 'bodyclass' => 'dropbox')); ?>
-<?php $tagDelimiter = get_option('tag_delimiter'); ?>
+<?php 
+    queue_js_file('items');
+    queue_js_file('tabs');
+    echo head(array('title' => 'Dropbox', 'bodyclass' => 'dropbox')); 
+    $tagDelimiter = get_option('tag_delimiter');
+  ?>
 
 <script type="text/javascript">
 //<![CDATA[
 jQuery(document).ready(function () {
     Omeka.Items.tagDelimiter = <?php echo js_escape($tagDelimiter); ?>;
-    Omeka.Items.tagChoices('#dropbox-tags', <?php echo js_escape(uri(array('controller' => 'tags', 'action' => 'autocomplete'), 'default', array(), true)); ?>);
+    Omeka.Items.tagChoices('#dropbox-tags', <?php echo js_escape(url(array('controller' => 'tags', 'action' => 'autocomplete'), 'default', array(), true)); ?>);
 });
 //]]>
 </script>
@@ -23,7 +26,7 @@ jQuery(document).ready(function () {
         from the normal item interface.
     </p>
 
-    <form action="<?php echo html_escape(uri(array('action'=>'add'))); ?>" method="post" accept-charset="utf-8">
+    <form action="<?php echo html_escape(url(array('action'=>'add'))); ?>" method="post" accept-charset="utf-8">
 
         <h2>Batch Add Files</h2>
         <p>For each file selected, a new item will be created. The properties set below will be applied to each new item.</p>
@@ -47,14 +50,23 @@ jQuery(document).ready(function () {
             <div class="field">
                 <label for="dropbox-collection-id">Collection</label>
                 <div class="inputs">
-                    <?php echo select_collection(array('name'=>'dropbox-collection-id', 'id'=>'dropbox-collection-id')); ?>
+                    <?php  
+                          
+                         echo $this->formSelect(
+                                    'dropbox-collection-id',
+                                     (!isset($item))? null : $item->collection_id,
+                                    array('id'=>'collection_id'),
+                                    get_table_options('Collection')
+                                 );
+                    ?>
+                    
                 </div>
             </div>
             <div class="field">
                 <label for="dropbox-tags">Tags</label>
                 <div class="inputs">
                     <?php echo $this->formText('dropbox-tags', null, array('class' => 'textinput')); ?>
-                    <p class="explanation">Separate tags with <?php echo settings('tag_delimiter'); ?></p>
+                    <p class="explanation">Separate tags with <?php echo get_option('tag_delimiter'); ?></p>
                 </div>
             </div>
         </fieldset>
@@ -65,4 +77,4 @@ jQuery(document).ready(function () {
     </form>
 </div>
 
-<?php foot();
+<?php echo foot();

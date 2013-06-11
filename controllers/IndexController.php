@@ -10,7 +10,7 @@
  *
  * @package Dropbox
  */
-class Dropbox_IndexController extends Omeka_Controller_Action
+class Dropbox_IndexController extends Omeka_Controller_AbstractActionController
 {
     /**
      * Front admin page.
@@ -35,12 +35,12 @@ class Dropbox_IndexController extends Omeka_Controller_Action
                     $uploadedFileNames = array_diff($fileNames, array_keys($notUploadedFileNamesToErrorMessages));
                 }
             } catch(Exception $e) {
-                $this->flashError($e->getMessage());
-                $this->redirect->goto('index');
+                $this->_helper->flashMessenger($e->getMessage());
+                $this->_helper->redirector('index');
             }
         } else {
-            $this->flashError('You must select a file to upload.');
-            $this->redirect->goto('index');
+            $this->_helper->flashMessenger('You must select a file to upload.');
+            $this->_helper->redirector('index');
         }
         $this->view->assign(compact('uploadedFileNames', 'notUploadedFileNamesToErrorMessages'));
     }
@@ -71,7 +71,7 @@ class Dropbox_IndexController extends Omeka_Controller_Action
                                         'tags'              => $_POST['dropbox-tags']
                                      );
                 $elementTexts = array('Dublin Core' => array('Title' => array(array('text' => $fileName, 'html' => false))));
-                $fileMetadata = array('file_transfer_type' => 'Filesystem', 'files' => array($filePath));
+                $fileMetadata = array('file_transfer_type' => 'Filesystem', 'file_ingest_options' => array('ignore_invalid_files'=> false),'files' => array($filePath));
                 $item = insert_item($itemMetadata, $elementTexts, $fileMetadata);
                 release_object($item);
                 // delete the file from the dropbox folder
